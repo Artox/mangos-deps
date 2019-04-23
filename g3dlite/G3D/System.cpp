@@ -530,8 +530,11 @@ static bool checkForCPUID() {
     // all known supported architectures have cpuid
     // add cases for incompatible architectures if they are added
     // e.g., if we ever support __powerpc__ being defined again
-
+#if defined(__arm__)
+    return false;
+#else
     return true;
+#endif
 }
 
 
@@ -570,7 +573,7 @@ void System::getStandardProcessorExtensions() {
 #endif
 }
 
-#if defined(G3D_WIN32) && !defined(G3D_64BIT) /* G3DFIX: Don't check if on 64-bit Windows platforms */
+#if defined(__i386__) /* G3DFIX: Don't check if on 64-bit Windows platforms */
     #pragma message("Port System::memcpy SIMD to all platforms")
 /** Michael Herf's fast memcpy */
 void memcpyMMX(void* dst, const void* src, int nbytes) {
@@ -1736,7 +1739,8 @@ void System::cpuid(CPUIDFunction func, uint32& eax, uint32& ebx, uint32& ecx, ui
     edx = 0;
 }
 
-#else
+#elif defined(__i386__) || defined(__x86_64__)
+/* Intel x86 */
 
 // See http://sam.zoy.org/blog/2007-04-13-shlib-with-non-pic-code-have-inline-assembly-and-pic-mix-well
 // for a discussion of why the second version saves ebx; it allows 32-bit code to compile with the -fPIC option.
@@ -1760,6 +1764,15 @@ void System::cpuid(CPUIDFunction func, uint32& eax, uint32& ebx, uint32& ecx, ui
                  : "=a"(eax), "=r"(ebx), "=c"(ecx), "=d"(edx)
                  : "a"(func));
 #endif
+}
+
+# else
+/* cpuid not implemented for platform */
+void System::cpuid(CPUIDFunction func, uint32& eax, uint32& ebx, uint32& ecx, uint32& edx) {
+    eax = 0;
+    ebx = 0;
+    ecx = 0;
+    edx = 0;
 }
 
 #endif
